@@ -23,6 +23,7 @@ class TreeNode:
         self.weights = None
         self.intercept = None
         self.prob = None
+        self.impurity = None
 
 
     #Dato un nodo ne restituisce uno nuovo con stessi attributi
@@ -43,6 +44,36 @@ class ClassificationTree:
         self.n_leaves = None
         self.oblique = oblique
 
+    #Crea l'albero iniziale
+    def initialize(self, data, label, root_node):
+        self.depth = self.get_depth(root_node)
+
+        stack = [root_node]
+        while(stack):
+            n = stack.pop()
+            self.tree[n.id] = n
+            if not n.is_leaf:
+                self.tree[n.id].left_node_id = n.left_node.id
+                self.tree[n.id].right_node_id = n.right_node.id
+                stack.append(n.right_node)
+                stack.append(n.left_node)
+
+        #Imposto i padri ogni figlio
+        for i in range(len(self.tree)):
+            #Verifico se è un branch
+            if self.tree[i].left_node_id != self.tree[i].right_node_id:
+                #In tal caso setto i relativi padri
+                self.tree[self.tree[i].left_node_id].parent_id = i
+                self.tree[self.tree[i].right_node_id].parent_id = i
+                self.tree[self.tree[i].id].left_node = self.tree[self.tree[i].left_node_id]
+                self.tree[self.tree[i].id].right_node = self.tree[self.tree[i].right_node_id]
+
+        #Costruisco indici elementi del dataset associati ad ogni nodo
+        self.build_idxs_of_subtree(data, range(len(data)), self.tree[0], oblique = self.oblique)
+
+
+
+    
     #Crea l'albero iniziale usando CART
     def initialize_from_CART(self, data, label, clf):
         self.depth = clf.max_depth
@@ -90,7 +121,39 @@ class ClassificationTree:
         self.build_idxs_of_subtree(data, range(len(data)), self.tree[0], oblique = self.oblique)
 
 
-    #Dato un albero ne crea uno nuovo con stessi parametri
+
+    #Ritorna la profondità del sottoalbero con radice in root
+    def get_depth(self, root):
+        stack = [root]
+        depth = 0
+        while(stack):
+            actual = stack.pop()
+            if actual.depth > depth:
+                depth = actual.depth
+            if not actual.is_leaf:
+                stack.append(actual.left_node)
+                stack.append(actual.right_node)
+        return depth
+
+    #Predice la label di un punto partendo dal sotto albero con radice in root
+    def predict_p(self, point, root):
+        actual = root
+        while(not actual.is_leaf):
+            if point[actual.feature] <= actual.threshold:
+                actual = actual.left_node
+            else:
+                actual = actual.right_node
+        return actual.value
+
+
+    def predict_data(self, data, root):
+        return np.array([self.predict_p(p, root) for p in data])
+
+    def score(self, preds, y):
+        return 1-np.count_nonzero(preds - y)/len(y)
+        #Dato un albero ne crea uno nuovo con stessi parametri
+
+
     @staticmethod
     def copy_tree(tree):
         new = ClassificationTree(min_samples=tree.min_samples, oblique = tree.oblique)
@@ -135,13 +198,15 @@ class ClassificationTree:
 
         for i in self.tree.keys():
             if self.tree[i].is_leaf:
-                print("%snode=%s is child of node %s. It's a leaf node. Value: %s" % (self.tree[i].depth * "\t", i, self.tree[i].parent_id, self.tree[i].value))
+                print("%snode=%s is child of node %s. It's a leaf node. Np: %s - Imp: %s - Value: %s" % (self.tree[i].depth * "\t", i, self.tree[i].parent_id, len(self.tree[i].data_idxs), self.tree[i].impurity, self.tree[i].value))
             else:
-                print("%snode=%s is child of node %s. It's a test node: go to node %s if X[:, %s] <= %s else to "
-                      "node %s."
+                print("%snode=%s is child of node %s. It's a test node. Np: %s - Imp: %s - Next =  %s if X[:, %s] <= %s else "
+                      "%s."
                       % (self.tree[i].depth * "\t",
                          i,
                          self.tree[i].parent_id,
+                         len(self.tree[i].data_idxs),
+                         self.tree[i].impurity,
                          self.tree[i].left_node_id,
                          self.tree[i].feature,
                          self.tree[i].threshold,
