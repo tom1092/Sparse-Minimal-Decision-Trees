@@ -76,7 +76,7 @@ class ClassificationTree:
     
     #Crea l'albero iniziale usando CART
     def initialize_from_CART(self, data, label, clf):
-        self.depth = clf.max_depth
+        self.depth = clf.tree_.max_depth
         n_nodes = clf.tree_.node_count
         children_left = clf.tree_.children_left
         children_right = clf.tree_.children_right
