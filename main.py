@@ -10,12 +10,27 @@ import sys
 from tqdm.auto import tqdm
 from time import sleep
 import numpy as np
+from sklearn.tree import _tree
+
+from sklearn.datasets import load_svmlight_file
 
 
 sp, cart = [], []
 sp_depth, cart_depth = [], []
-for i in tqdm(range(50)):
+sp_n_leaves, cart_n_leaves = [], []
+
+def get_data(path):
+    data = load_svmlight_file(path, dtype=np.float32)
+    labels = (data[1] > 0).astype(int)
+
+    return np.asarray(data[0].todense()), labels
+
+for i in tqdm(range(5)):
     sleep(3)
+    X, y = get_data("/media/bigdata/dataset/SLOR/spam")
+    print (X.shape)
+
+
     #Spambase
     #data = pd.read_csv("datasets/spambase.csv")
     #X = data.to_numpy()
@@ -28,9 +43,9 @@ for i in tqdm(range(50)):
 
 
     #Cancer
-    data = load_breast_cancer()
-    X = data.data
-    y = data.target
+    #data = load_breast_cancer()
+    #X = data.data
+    #y = data.target
 
     #X = X[y!=2]
     #y = y[y!=2]
@@ -39,18 +54,20 @@ for i in tqdm(range(50)):
 
 
     #CART
-    clf = tree.DecisionTreeClassifier(random_state=i, min_samples_leaf = 1, min_impurity_split = 1e-1)
+    clf = tree.DecisionTreeClassifier(random_state=i, min_samples_leaf = 6)
     clf = clf.fit(X, y)
 
 
     #CART TAO
     cart_tree = ClassificationTree()
     cart_tree.initialize_from_CART(X, y, clf)
-    #tao = TAO(cart_tree)
-    #tao.evolve(X, y)
+    tao = TAO(cart_tree)
+    tao.evolve(X, y)
     preds = cart_tree.predict_data(X_test, cart_tree.tree[0])
     cart_score = cart_tree.score(preds, y_test)
     cart_depth.append(cart_tree.depth)
+    n_leaves = cart_tree.n_leaves
+    cart_n_leaves.append(n_leaves)
     #tree.plot_tree(clf)
     #c_score = clf.score(X_test, y_test)
     #print(c_score)
@@ -58,13 +75,14 @@ for i in tqdm(range(50)):
     cart.append(cart_score)
 
     #Sparse
-    root = train_tree(X, y, n_splits = 100, min_points_leaf = 1, min_impurity=1e-1)
+    root = train_tree(X, y, n_splits = 100, min_points_leaf = 6, min_impurity=1e-03)
     sparse_tree = ClassificationTree()
     sp_depth.append(sparse_tree.get_depth(root))
     sparse_tree.initialize(X, y, root)
-    #tao = TAO(sparse_tree)
-    #tao.evolve(X, y)
-    #sparse_tree.print_tree_structure()
+    sp_n_leaves.append(sparse_tree.n_leaves)
+    tao = TAO(sparse_tree)
+    tao.evolve(X, y)
+    sparse_tree.print_tree_structure()
     preds = sparse_tree.predict_data(X_test, root)
     sparse_score = sparse_tree.score(preds, y_test)
     #print(sparse_score)
@@ -72,4 +90,4 @@ for i in tqdm(range(50)):
     sp.append(sparse_score)
 
 
-print("CART: %s +- %s Mean_depth_cart: %s Sparse: %s +- %s Mean_depth_sparse: %s" % (np.mean(cart), np.std(cart), np.mean(cart_depth), np.mean(sp), np.std(sp), np.mean(sp_depth)))
+print("CART: %s +- %s Mean_depth_cart: %s Mean_leaves_number: %s Sparse: %s +- %s Mean_depth_sparse: %s Mean_leaves_number: %s" % (np.mean(cart), np.std(cart), np.mean(cart_depth), np.mean(cart_n_leaves), np.mean(sp), np.std(sp), np.mean(sp_depth), np.mean(sp_n_leaves)))
