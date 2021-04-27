@@ -41,7 +41,7 @@ class ClassificationTree:
         self.tree = {}
         self.min_samples = min_samples
         self.depth = None
-        self.n_leaves = None
+        self.n_leaves = 0
         self.oblique = oblique
 
     #Crea l'albero iniziale
@@ -57,6 +57,8 @@ class ClassificationTree:
                 self.tree[n.id].right_node_id = n.right_node.id
                 stack.append(n.right_node)
                 stack.append(n.left_node)
+            else:
+                self.n_leaves += 1
 
         #Imposto i padri ogni figlio
         for i in range(len(self.tree)):
@@ -73,10 +75,10 @@ class ClassificationTree:
 
 
 
-    
+
     #Crea l'albero iniziale usando CART
     def initialize_from_CART(self, data, label, clf):
-        self.depth = clf.max_depth
+        self.depth = clf.tree_.max_depth
         n_nodes = clf.tree_.node_count
         children_left = clf.tree_.children_left
         children_right = clf.tree_.children_right
@@ -106,6 +108,7 @@ class ClassificationTree:
             else:
                 is_leaves[node_id] = True
                 self.tree[node_id] = TreeNode(node_id, node_depth[node_id], -1, -1, None, None, feature[node_id], threshold[node_id], True, np.argmax(value[node_id]))
+                self.n_leaves += 1
 
         #Imposto i padri ogni figlio
         for i in range(len(self.tree)):
@@ -127,7 +130,7 @@ class ClassificationTree:
         stack = [root]
         depth = 0
         while(stack):
-            actual = stack.pop()
+            actual = stack.pop()    
             if actual.depth > depth:
                 depth = actual.depth
             if not actual.is_leaf:
