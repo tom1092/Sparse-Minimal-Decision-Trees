@@ -25,11 +25,11 @@ def get_data(path):
 
     return np.asarray(data[0].todense()), labels
 
-for i in tqdm(range(5)):
+for i in tqdm(range(20)):
     sleep(3)
-    X, y = get_data("/media/bigdata/dataset/SLOR/spam")
-    print (X.shape)
-
+    X, y = get_data("/media/bigdata/dataset/SLOR/biodeg")
+    #print (X.shape)
+    
 
     #Spambase
     #data = pd.read_csv("datasets/spambase.csv")
@@ -41,6 +41,8 @@ for i in tqdm(range(5)):
     #X = np.load("datasets/banknote_train.npy")
     #y = np.load("datasets/banknote_label.npy")
 
+    print (X.shape)
+    
 
     #Cancer
     #data = load_breast_cancer()
