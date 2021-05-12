@@ -130,7 +130,7 @@ class ClassificationTree:
         stack = [root]
         depth = 0
         while(stack):
-            actual = stack.pop()    
+            actual = stack.pop()
             if actual.depth > depth:
                 depth = actual.depth
             if not actual.is_leaf:
@@ -154,7 +154,7 @@ class ClassificationTree:
 
     def score(self, preds, y):
         return 1-np.count_nonzero(preds - y)/len(y)
-        #Dato un albero ne crea uno nuovo con stessi parametri
+        
 
 
     @staticmethod
