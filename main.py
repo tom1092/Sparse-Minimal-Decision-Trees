@@ -44,8 +44,8 @@ if __name__ == '__main__':
     parser.add_argument('--dataset', dest='dataset', type=str, help="Dataset path light svm format")
     args = parser.parse_args()
 
-    for i in tqdm(range(50)):
-        sleep(3)
+    for i in range(50):
+        #sleep(3)
 
         #d = pd.read_csv("./datasets/tic-tac-toe_csv.csv")
         #d = pd.get_dummies(d)
@@ -57,10 +57,11 @@ if __name__ == '__main__':
         #y = np.array([0 if y[i] == False else 1 for i in range(len(y))])
 
 
-        #data = ""
-        #labels = ""
         X, y = get_data(args.dataset, categorical = False)
-        #print (X.shape)
+        print()
+        print("-----------------")
+        print("Dataset: ", args.dataset)
+        print("Dataset shape: ", X.shape)
 
 
         X, X_test, y, y_test = train_test_split(X, y, test_size=0.20, stratify=y, random_state = i)
@@ -69,7 +70,7 @@ if __name__ == '__main__':
         clf = tree.DecisionTreeClassifier(random_state=i, max_depth = 4)
         clf = clf.fit(X, y)
 
-        parameters = {'min_samples_leaf' : [2, 4, 6], 'max_depth' : [4, 5]}
+        parameters = {'min_samples_leaf' : [2, 3, 4, 5, 6], 'max_depth' : [1, 2, 3, 4, 5, 6]}
         grid = GridSearchCV(clf, parameters, n_jobs = -1)
         #print("prima fit")
         grid.fit(X, y)
