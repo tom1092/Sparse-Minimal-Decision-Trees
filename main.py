@@ -44,6 +44,13 @@ if __name__ == '__main__':
     parser.add_argument('--dataset', dest='dataset', type=str, help="Dataset path light svm format")
     args = parser.parse_args()
 
+    X_data, y_data = get_data(args.dataset, categorical = False)
+    print()
+    print("-----------------")
+    print("Dataset: ", args.dataset)
+    print("Dataset shape: ", X_data.shape)
+
+
     for i in range(50):
         #sleep(3)
 
@@ -57,14 +64,7 @@ if __name__ == '__main__':
         #y = np.array([0 if y[i] == False else 1 for i in range(len(y))])
 
 
-        X, y = get_data(args.dataset, categorical = False)
-        print()
-        print("-----------------")
-        print("Dataset: ", args.dataset)
-        print("Dataset shape: ", X.shape)
-
-
-        X, X_test, y, y_test = train_test_split(X, y, test_size=0.20, stratify=y, random_state = i)
+        X, X_test, y, y_test = train_test_split(X_data, y_data, test_size=0.20, stratify=y_data, random_state = i)
 
         #CART
         clf = tree.DecisionTreeClassifier(random_state=i, max_depth = 4)
@@ -94,10 +94,10 @@ if __name__ == '__main__':
         #print("CART test: ", c_score)
         cart.append(cart_score)
 
+
+
+
         #Sparse
-
-
-
         sparse_tree = SparseTreeEstimator()
         parameters = {'min_samples_leaf' : [2, 4, 6], 'max_depth' : [4, 5]}
         grid = GridSearchCV(sparse_tree, parameters, n_jobs = -1)
