@@ -62,7 +62,7 @@ def get_best_split_purity(X, y, data_idxs):
 
 
 
-def train_tree(X, y, n_splits, min_sample_leaf = 4, max_depth = 4):
+def train_tree(X, y, min_samples_leaf = 4, max_depth = 4):
     key = 0
     depth = 0
 
@@ -85,7 +85,7 @@ def train_tree(X, y, n_splits, min_sample_leaf = 4, max_depth = 4):
         n.threshold = None
         n.feature, n.threshold , p = get_best_split_purity(X, y, n.data_idxs)
 
-        if n.threshold != None and n.depth > max_depth:
+        if n.threshold != None and n.depth < max_depth:
             #print("Node: ", n.id, "Feature", n.feature, "Th: ", n.threshold, "Impurity: ", p)
 
             #Get indexes of left and right subset
@@ -93,7 +93,7 @@ def train_tree(X, y, n_splits, min_sample_leaf = 4, max_depth = 4):
             indexes_right = np.array(list(set(n.data_idxs) - set(indexes_left)))
 
 
-            if (len(indexes_left) >= min_sample_leaf and len(indexes_right) >= min_sample_leaf):
+            if (len(indexes_left) >= min_samples_leaf and len(indexes_right) >= min_samples_leaf):
                 #Get purity of the two subsets
                 #print(n.feature, n.threshold)
                 print("si")
