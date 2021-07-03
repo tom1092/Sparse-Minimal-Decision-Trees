@@ -4,7 +4,37 @@ from local_optimizers import TAO
 from sklearn.base import BaseEstimator
 
 
+<<<<<<< HEAD
+def get_best_split_purity(X, y, data_idxs):
+    min_impur = np.inf
+    best_f = None
+    best_th = None
+    alfa = 1
+    improve = False
+    for feature in range(len(X[0])):
+        indices = np.argsort(X[data_idxs, feature])
+        subset_X = X[data_idxs[indices], feature]
+        subset_y = y[data_idxs[indices]]
+
+        n_left, n_right = 0, len(indices)
+        n_positive_left = 0
+        n_negative_left = 0
+        n_positive_right = np.count_nonzero(subset_y)
+        n_negative_right = n_right - n_positive_right
+        i = 0
+        while (i < len(subset_X) - 1):
+
+            th = (subset_X[i]+subset_X[i+1])/2
+
+            if subset_y[i] == 0:
+                n_negative_left += 1
+                n_negative_right -= 1
+            else:
+                n_positive_left += 1
+                n_positive_right -= 1
+=======
 class SparseTreeEstimator(BaseEstimator):
+>>>>>>> 73d13610802b7bd1a6e716ad2e58d6bd605ff671
 
     def __init__(self, min_samples_leaf = 4, min_impurity = 1e-2, max_depth = 4):
         self.min_samples_leaf = min_samples_leaf
@@ -27,20 +57,55 @@ class SparseTreeEstimator(BaseEstimator):
         preds = self.predict(X)
         return self.tree.score(preds, y_true)
 
+<<<<<<< HEAD
+def train_tree(X, y, n_splits, min_sample_leaf = 4, max_depth = 4):
+    key = 0
+    depth = 0
+=======
     def get_n_leaves(self):
         return self.tree.n_leaves
+>>>>>>> 73d13610802b7bd1a6e716ad2e58d6bd605ff671
 
 
     def get_depth(self):
         return self.tree.get_depth(self.tree.tree[0])
 
+<<<<<<< HEAD
+    stack = [node]
+    while(stack):
+        stack.sort(key=lambda x: x.impurity)
+=======
     def print_tree(self):
         self.tree.print_tree_structure()
+>>>>>>> 73d13610802b7bd1a6e716ad2e58d6bd605ff671
 
     def predict(self, X):
         return self.tree.predict_data(X, self.tree.tree[0])
 
 
+<<<<<<< HEAD
+        if n.threshold != None and n.depth > max_depth:
+            #print("Node: ", n.id, "Feature", n.feature, "Th: ", n.threshold, "Impurity: ", p)
+
+            #Get indexes of left and right subset
+            indexes_left = np.array([i for i in n.data_idxs if X[i, n.feature] <= n.threshold])
+            indexes_right = np.array(list(set(n.data_idxs) - set(indexes_left)))
+
+
+            if (len(indexes_left) >= min_sample_leaf and len(indexes_right) >= min_sample_leaf):
+                #Get purity of the two subsets
+                #print(n.feature, n.threshold)
+                print("si")
+                #Get indexes of left and right subset
+
+                #print(len(indexes_right))
+                print("left:", len(indexes_left))
+                print("right:", len(indexes_right))
+
+                #Get purity of the two subsets
+                #print(n.feature, n.threshold)
+                print("si")
+=======
     def restore_impurities(self, node, X, y):
         stack = [node]
         positive = np.count_nonzero(y)
@@ -53,6 +118,7 @@ class SparseTreeEstimator(BaseEstimator):
             if not n.is_leaf:
                 indexes_left = np.array([i for i in n.data_idxs if X[i, n.feature] <= n.threshold])
                 indexes_right = np.array(list(set(n.data_idxs) - set(indexes_left)))
+>>>>>>> 73d13610802b7bd1a6e716ad2e58d6bd605ff671
 
 
                 positive_r = np.count_nonzero(y[indexes_right])
@@ -70,6 +136,51 @@ class SparseTreeEstimator(BaseEstimator):
                 stack.append(n.left_node)
                 stack.append(n.right_node)
 
+<<<<<<< HEAD
+
+
+                #Controllo se lo split è valido
+                #if n.impurity - min(impurity_left, impurity_right) >= min_impurity:
+                    #Effettuo lo split
+
+                #Create two children
+                n_left = TreeNode(key+1, depth+1)
+                n_right = TreeNode(key+2, depth+1)
+                n_left.depth = n.depth + 1
+                n_right.depth = n.depth + 1
+                n_left.data_idxs = indexes_left
+                n_right.data_idxs = indexes_right
+                key = key + 2
+
+                #Aggancio al padre
+                n.left_node = n_left
+                n.right_node= n_right
+                n.left_node_id = n_left.id
+                n.right_node_id = n_right.id
+
+
+                ones = np.count_nonzero(y[n_left.data_idxs])
+                nums = np.array([len(n_left.data_idxs) - ones, ones])
+                n_left.value = np.argmax(nums)
+                ones = np.count_nonzero(y[n_right.data_idxs])
+                nums = np.array([len(n_right.data_idxs) - ones, ones])
+                n_right.value = np.argmax(nums)
+
+
+                n_left.is_leaf = False
+                n_right.is_leaf = False
+                n_right.impurity = impurity_right
+                n_left.impurity = impurity_left
+                if len(n_left.data_idxs) == 1 or len(n_right.data_idxs) == 1:
+                    n_right.is_leaf = True
+                    n_left.is_leaf = True
+                else:
+                    stack.append(n_right)
+                    stack.append(n_left)
+
+
+            else:
+=======
     def get_best_split_purity(self, X, y, data_idxs):
 
         min_impur = np.inf
@@ -155,6 +266,7 @@ class SparseTreeEstimator(BaseEstimator):
             n = stack.pop()
 
             if n.depth == self.max_depth:
+>>>>>>> 73d13610802b7bd1a6e716ad2e58d6bd605ff671
                 ones = np.count_nonzero(y[n.data_idxs])
                 nums = np.array([len(n.data_idxs) - ones, ones])
                 n_right.value = np.argmax(nums)
