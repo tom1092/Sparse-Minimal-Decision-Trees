@@ -12,17 +12,17 @@ def get_best_split_purity(X, y, data_idxs):
         indices = np.argsort(X[data_idxs, feature])
         subset_X = X[data_idxs[indices], feature]
         subset_y = y[data_idxs[indices]]
-        i = 0
+
         n_left, n_right = 0, len(indices)
         n_positive_left = 0
         n_negative_left = 0
         n_positive_right = np.count_nonzero(subset_y)
         n_negative_right = n_right - n_positive_right
-
+        i = 0
         while (i < len(subset_X) - 1):
-            
+
             th = (subset_X[i]+subset_X[i+1])/2
-            
+
             if subset_y[i] == 0:
                 n_negative_left += 1
                 n_negative_right -= 1
@@ -62,7 +62,7 @@ def get_best_split_purity(X, y, data_idxs):
 
 
 
-def train_tree(X, y, n_splits, min_points_leaf = 4, min_impurity = 1e-2):
+def train_tree(X, y, n_splits, min_sample_leaf = 4, max_depth = 4):
     key = 0
     depth = 0
 
@@ -76,7 +76,6 @@ def train_tree(X, y, n_splits, min_points_leaf = 4, min_impurity = 1e-2):
 
 
     stack = [node]
-    i = 0
     while(stack):
         stack.sort(key=lambda x: x.impurity)
 
@@ -86,7 +85,7 @@ def train_tree(X, y, n_splits, min_points_leaf = 4, min_impurity = 1e-2):
         n.threshold = None
         n.feature, n.threshold , p = get_best_split_purity(X, y, n.data_idxs)
 
-        if n.threshold != None and i<n_splits:
+        if n.threshold != None and n.depth > max_depth:
             #print("Node: ", n.id, "Feature", n.feature, "Th: ", n.threshold, "Impurity: ", p)
 
             #Get indexes of left and right subset
@@ -94,7 +93,7 @@ def train_tree(X, y, n_splits, min_points_leaf = 4, min_impurity = 1e-2):
             indexes_right = np.array(list(set(n.data_idxs) - set(indexes_left)))
 
 
-            if (len(indexes_left) >= min_points_leaf and len(indexes_right) >= min_points_leaf):
+            if (len(indexes_left) >= min_sample_leaf and len(indexes_right) >= min_sample_leaf):
                 #Get purity of the two subsets
                 #print(n.feature, n.threshold)
                 print("si")
@@ -120,87 +119,48 @@ def train_tree(X, y, n_splits, min_points_leaf = 4, min_impurity = 1e-2):
                 impurity_left = (len(indexes_left) - np.abs(positive_l - negative_l))/len(n.data_idxs)
 
 
-                #Se è l'ultimo split vanno comunque messe foglie entrambe
-                if i == (n_splits - 1):
 
-                    n_left.is_leaf = True
+
+                #Controllo se lo split è valido
+                #if n.impurity - min(impurity_left, impurity_right) >= min_impurity:
+                    #Effettuo lo split
+
+                #Create two children
+                n_left = TreeNode(key+1, depth+1)
+                n_right = TreeNode(key+2, depth+1)
+                n_left.depth = n.depth + 1
+                n_right.depth = n.depth + 1
+                n_left.data_idxs = indexes_left
+                n_right.data_idxs = indexes_right
+                key = key + 2
+
+                #Aggancio al padre
+                n.left_node = n_left
+                n.right_node= n_right
+                n.left_node_id = n_left.id
+                n.right_node_id = n_right.id
+
+
+                ones = np.count_nonzero(y[n_left.data_idxs])
+                nums = np.array([len(n_left.data_idxs) - ones, ones])
+                n_left.value = np.argmax(nums)
+                ones = np.count_nonzero(y[n_right.data_idxs])
+                nums = np.array([len(n_right.data_idxs) - ones, ones])
+                n_right.value = np.argmax(nums)
+
+
+                n_left.is_leaf = False
+                n_right.is_leaf = False
+                n_right.impurity = impurity_right
+                n_left.impurity = impurity_left
+                if len(n_left.data_idxs) == 1 or len(n_right.data_idxs) == 1:
                     n_right.is_leaf = True
-
+                    n_left.is_leaf = True
                 else:
-
-                    #Controllo se lo split è valido
-                    #if n.impurity - min(impurity_left, impurity_right) >= min_impurity:
-                        #Effettuo lo split
-
-                    #Create two children
-                    n_left = TreeNode(key+1, depth+1)
-                    n_right = TreeNode(key+2, depth+1)
-                    n_left.depth = n.depth + 1
-                    n_right.depth = n.depth + 1
-                    n_left.data_idxs = indexes_left
-                    n_right.data_idxs = indexes_right
-                    key = key + 2
-
-                    #Aggancio al padre
-                    n.left_node = n_left
-                    n.right_node= n_right
-                    n.left_node_id = n_left.id
-                    n.right_node_id = n_right.id
+                    stack.append(n_right)
+                    stack.append(n_left)
 
 
-                    ones = np.count_nonzero(y[n_left.data_idxs])
-                    nums = np.array([len(n_left.data_idxs) - ones, ones])
-                    n_left.value = np.argmax(nums)
-                    ones = np.count_nonzero(y[n_right.data_idxs])
-                    nums = np.array([len(n_right.data_idxs) - ones, ones])
-                    n_right.value = np.argmax(nums)
-
-
-                    n_left.is_leaf = False
-                    n_right.is_leaf = False
-                    n_right.impurity = impurity_right
-                    n_left.impurity = impurity_left
-                    if len(n_left.data_idxs) == 1 or len(n_right.data_idxs) == 1:
-                        n_right.is_leaf = True
-                        n_left.is_leaf = True
-                    else:
-                        stack.append(n_right)
-                        stack.append(n_left)
-
-
-                    '''
-                    #Altrimenti il nodo padre non migliora sufficientemente l'impurità, dunque diventa foglia
-                    else:
-                        ones = np.count_nonzero(y[n.data_idxs])
-                        nums = np.array([len(n.data_idxs) - ones, ones])
-                        n.value = np.argmax(nums)
-                        n.is_leaf = True
-
-
-                    #Altrimenti controllo la purezza. Qui la foglia sarà il figlio sinistro
-                    if  n.impurity - impurity_left < min_impurity and impurity_left < impurity_right:
-                        n_left.is_leaf = True
-                        #stack.append(n_right)
-
-                    else:
-                        n_left.is_leaf = False
-
-                        stack.append(n_left)
-
-                    if n.impurity - impurity_right < min_impurity and impurity_right < impurity_left:
-                        n_right.is_leaf = True
-                        #print("foglia a destra con ", len(n_right.data_idxs), " punti. Punti a sinistra: ", len(n_left.data_idxs))
-                        #stack.append(n_left)
-                    else:
-                        n_right.is_leaf = False
-                        stack.append(n_right)
-
-                    n_right.impurity = impurity_right
-                    n_left.impurity = impurity_left
-                    '''
-
-
-                i = i + 1
             else:
                 ones = np.count_nonzero(y[n.data_idxs])
                 nums = np.array([len(n.data_idxs) - ones, ones])
